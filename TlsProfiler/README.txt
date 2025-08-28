@@ -6,8 +6,8 @@ https://github.com/cocoz93/IntegrityTest/issues/1#issue-3363275273
 `     |                   |                   |`<br/>
 `     v                   v                   v`
 `+----------------+  +----------------+  +----------------+`
-`| TLS Index #A   |  | TLS Index #B   |  | TLS Index #C   |`
-`| pSample (배열) |  | pSample (배열) |  | pSample (배열) |`
+`| TLS Index      |  | TLS Index      |  | TLS Index      |`
+`|   pSample []   |  |   pSample []   |  |   pSample []   |`
 `+----------------+  +----------------+  +----------------+`
 `         \                 |                  /`
 `          \                |                 /`
