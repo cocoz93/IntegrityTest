@@ -5,7 +5,6 @@
 #include <Psapi.h>		//PROCESS_MEMORY_COUNTERS
 #include <DbgHelp.h>	//_MINIDUMP_EXCEPTION_INFORMATION
 #include <crtdbg.h>		//_CrtSetReportMode
-#include "Log.h"
 
 
 class CCrashDump
@@ -49,8 +48,8 @@ public:
 
 	static void Crash(void)
 	{
-		if (FALSE == CMyLog::FileSaveLog())
-			return;
+		//if (FALSE == CMyLog::FileSaveLog())
+		//	return;
 
 		int* p = nullptr;
 		*p = 0;

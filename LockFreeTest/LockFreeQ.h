@@ -64,7 +64,7 @@ public:
 	void Clear(void)
 	{
 		//모든 노드 삭제
-		volatile NODE* pfNode = nullptr;
+		NODE* pfNode = nullptr;
 
 		while (this->_phead->pNode->pNextNode != nullptr)
 		{

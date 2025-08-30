@@ -73,9 +73,7 @@ void WaitTime(void)
 		YieldProcessor();
 		break;
 	case 2:
-		YieldProcessor();
-		YieldProcessor();
-		YieldProcessor();
+		SwitchToThread();
 		break;
 	case 3:
 		Sleep(0);
@@ -493,7 +491,7 @@ void LockFreeTest()
 	wprintf(L"=============================================================\n");
 	wprintf(L"                     WaitTime Select\n                        \n");
 	wprintf(L"=============================================================\n");
-	wprintf(L"1.YieldProcessor    2.YieldProcessor*2     3.Sleep(0)\n");
+	wprintf(L"1.YieldProcessor       2.SwitchToThread        3.Sleep(0)\n");
 	wscanf_s(L"%d", &g_WaitLevel);
 
 	g_LoopCount = new unsigned long long[g_ThreadCount];
