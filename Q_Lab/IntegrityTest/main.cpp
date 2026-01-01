@@ -1,4 +1,5 @@
 ﻿//
+#pragma once
 #include <iostream>
 #include <vector>
 #include <atomic>
@@ -10,7 +11,7 @@
 #include <memory> 
 #include <set>
 #include <string>
-#include "RingBuffer.h"
+#include "../RingBuffer.h"
 
 //=============================================================================
 // 테스트 설정 상수 (반복 횟수 조절 가능)

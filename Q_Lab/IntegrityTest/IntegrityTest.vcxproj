@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{dd726294-2afa-4fd7-9489-f53d78d30785}</ProjectGuid>
-    <RootNamespace>BufferTestv25</RootNamespace>
+    <ProjectGuid>{2d10592f-58f3-4d0f-a4ef-d8aa8a764769}</ProjectGuid>
+    <RootNamespace>IntegrityTest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -126,7 +126,8 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RingBuffer.h" />
+    <ClInclude Include="..\LockFreeQ.h" />
+    <ClInclude Include="..\RingBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
