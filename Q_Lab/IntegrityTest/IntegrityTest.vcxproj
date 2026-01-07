@@ -125,12 +125,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IntegrityTest.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="TmpBaseTest.cpp" />
+    <ClCompile Include="tmptest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\MemoryPool_v25\CBaseFreeList.h" />
     <ClInclude Include="..\RingBuffer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".editorconfig" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
