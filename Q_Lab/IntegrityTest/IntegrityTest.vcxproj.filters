@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="IntegrityTest.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -23,7 +23,7 @@
     <ClInclude Include="..\RingBuffer.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
-    <ClInclude Include="..\LockFreeQ.h">
+    <ClInclude Include="..\..\MemoryPool_v25\CBaseFreeList.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>
