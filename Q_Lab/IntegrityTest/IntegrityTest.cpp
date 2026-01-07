@@ -79,8 +79,8 @@ void Test_DataIntegrity()
     std::cout << "========================================" << std::endl;
 
     const uint64_t ITERATIONS = TestConfig::DATA_INTEGRITY_ITERATIONS;
-    auto rb = std::make_unique<CRingBufferST>(8192);
-    if (!rb->IsValid())
+    auto container = std::make_unique<CRingBufferST>(8192);
+    if (!container->IsValid())
     {
         std::cout << "[ERROR] RingBuffer 할당 실패" << std::endl;
         return;
@@ -104,7 +104,7 @@ void Test_DataIntegrity()
 		PrintProgress("데이터 무결성", i, ITERATIONS); // 진행 상황 출력
 
 		// 버퍼의 남은 공간이 있으면 무작위로(1~10) 데이터 쓰기
-        if (rb->GetFreeSize() >= sizeof(uint64_t) * 10)
+        if (container->GetFreeSize() >= sizeof(uint64_t) * 10)
         {
             int writeCount = sizeDis(gen) % 10 + 1;
             writeBuffer.clear(); 
@@ -115,19 +115,19 @@ void Test_DataIntegrity()
                 writeBuffer.push_back(writeSequence++);
             }
 
-            size_t written = rb->Enqueue(writeBuffer.data(), writeBuffer.size() * sizeof(uint64_t));  
+            size_t written = container->Enqueue(writeBuffer.data(), writeBuffer.size() * sizeof(uint64_t));  
             TEST_ASSERT(written == writeBuffer.size() * sizeof(uint64_t), "Enqueue 크기 불일치");
         }
 
 		// 버퍼에 읽을 데이터가 있으면 무작위로(1~10) 데이터 읽기
-        if (rb->GetDataSize() >= sizeof(uint64_t))
+        if (container->GetDataSize() >= sizeof(uint64_t))
         {
             int readCount = (sizeDis(gen) % 10 + 1);
-            size_t maxRead = rb->GetDataSize() / sizeof(uint64_t);
+            size_t maxRead = container->GetDataSize() / sizeof(uint64_t);
             if (readCount > maxRead) readCount = (int)maxRead;
 
             readBuffer.resize(readCount);
-            size_t read = rb->Dequeue(readBuffer.data(), readCount * sizeof(uint64_t)); 
+            size_t read = container->Dequeue(readBuffer.data(), readCount * sizeof(uint64_t)); 
             TEST_ASSERT(read == readCount * sizeof(uint64_t), "Dequeue 크기 불일치");
 
             // 읽은 데이터 검증
@@ -147,17 +147,17 @@ void Test_DataIntegrity()
     }
 
 	// 남은 데이터 모두 읽기
-    while (rb->GetDataSize() >= sizeof(uint64_t))
+    while (container->GetDataSize() >= sizeof(uint64_t))
     {
         uint64_t value;
-        size_t read = rb->Dequeue(&value, sizeof(uint64_t)); 
+        size_t read = container->Dequeue(&value, sizeof(uint64_t)); 
         TEST_ASSERT(read == sizeof(uint64_t), "최종 Dequeue 실패");
         TEST_ASSERT(value == readSequence, "최종 데이터 검증 실패");
         readSequence++;
     }
 
     TEST_ASSERT(readSequence == writeSequence, "총 쓴 데이터와 읽은 데이터 개수 불일치");
-    TEST_ASSERT(rb->GetDataSize() == 0, "버퍼가 완전히 비워지지 않음");
+    TEST_ASSERT(container->GetDataSize() == 0, "버퍼가 완전히 비워지지 않음");
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime).count();
@@ -183,8 +183,8 @@ void Test_Invariants()
     std::cout << "========================================" << std::endl;
 
     const uint64_t ITERATIONS = TestConfig::INVARIANT_ITERATIONS;
-    auto rb = std::make_unique<CRingBufferST>(4096);
-    if (!rb->IsValid())
+    auto container = std::make_unique<CRingBufferST>(4096);
+    if (!container->IsValid())
     {
         std::cout << "[ERROR] RingBuffer 할당 실패" << std::endl;
         return;
@@ -203,8 +203,8 @@ void Test_Invariants()
         g_totalIterations = i;
         PrintProgress("불변성 검증", i, ITERATIONS);
 
-        size_t beforeDataSize = rb->GetDataSize();
-        size_t beforeFreeSize = rb->GetFreeSize();
+        size_t beforeDataSize = container->GetDataSize();
+        size_t beforeFreeSize = container->GetFreeSize();
         size_t capacity = 4095;
 
 		// [사용중인 공간 + 여유 공간 = 용량 - 1] 확인
@@ -219,24 +219,24 @@ void Test_Invariants()
         {
 		case 0: // Enqueue
         {
-            size_t written = rb->Enqueue(buffer.data(), size);  
-            size_t afterDataSize = rb->GetDataSize();
+            size_t written = container->Enqueue(buffer.data(), size);  
+            size_t afterDataSize = container->GetDataSize();
             TEST_ASSERT(afterDataSize == beforeDataSize + written,
                 "Enqueue 후 DataSize 증가량 불일치");
             break;
         }
 		case 1: // Dequeue
         {
-            size_t read = rb->Dequeue(buffer.data(), size);  
-            size_t afterDataSize = rb->GetDataSize();
+            size_t read = container->Dequeue(buffer.data(), size);  
+            size_t afterDataSize = container->GetDataSize();
             TEST_ASSERT(afterDataSize == beforeDataSize - read,
                 "Dequeue 후 DataSize 감소량 불일치");
             break;
         }
 		case 2: // Peek
         {
-            size_t peeked = rb->Peek(buffer.data(), size);
-            size_t afterDataSize = rb->GetDataSize();
+            size_t peeked = container->Peek(buffer.data(), size);
+            size_t afterDataSize = container->GetDataSize();
             TEST_ASSERT(afterDataSize == beforeDataSize,
                 "Peek 후 DataSize가 변경됨");
             TEST_ASSERT(peeked <= beforeDataSize,
@@ -245,8 +245,8 @@ void Test_Invariants()
         }
 		case 3: // Consume (포인터만 이동)
         {
-            size_t consumed = rb->Consume(size);
-            size_t afterDataSize = rb->GetDataSize();
+            size_t consumed = container->Consume(size);
+            size_t afterDataSize = container->GetDataSize();
             TEST_ASSERT(afterDataSize == beforeDataSize - consumed,
                 "Consume 후 DataSize 감소량 불일치");
             TEST_ASSERT(consumed <= beforeDataSize,
@@ -255,17 +255,17 @@ void Test_Invariants()
         }
 		case 4: // Clear
         {
-            rb->Clear();
-            TEST_ASSERT(rb->GetDataSize() == 0,
+            container->Clear();
+            TEST_ASSERT(container->GetDataSize() == 0,
                 "Clear 후 DataSize가 0이 아님");
-            TEST_ASSERT(rb->GetFreeSize() == capacity,
+            TEST_ASSERT(container->GetFreeSize() == capacity,
                 "Clear 후 FreeSize가 capacity가 아님");
             break;
         }
         }
 
-        size_t afterDataSize = rb->GetDataSize();
-        size_t afterFreeSize = rb->GetFreeSize();
+        size_t afterDataSize = container->GetDataSize();
+        size_t afterFreeSize = container->GetFreeSize();
         TEST_ASSERT(afterDataSize + afterFreeSize == capacity,
             "작업 후 불변 조건 위반");
     }
@@ -296,16 +296,16 @@ void Test_BoundaryConditions()
     // 시나리오 1: 경계에서 Wrap-Around 반복 (핵심 테스트)
     {
         std::cout << "\n[시나리오 1] 경계 Wrap-Around 집중 테스트" << std::endl;
-        auto rb = std::make_unique<CRingBufferST>(1024);  // 변경
+        auto container = std::make_unique<CRingBufferST>(1024);  // 변경
         std::vector<char> setupData(1022);
         
 		// 1. 포인터를 경계(1022)로 이동 (Enque 후에 Deque)
-        size_t setup1 = rb->Enqueue(setupData.data(), setupData.size());
+        size_t setup1 = container->Enqueue(setupData.data(), setupData.size());
         TEST_ASSERT(setup1 == setupData.size(), "Setup: 1022바이트 쓰기 실패");
         
-        size_t setup2 = rb->Dequeue(setupData.data(), setupData.size());
+        size_t setup2 = container->Dequeue(setupData.data(), setupData.size());
         TEST_ASSERT(setup2 == setupData.size(), "Setup: 1022바이트 읽기 실패");
-        TEST_ASSERT(rb->GetDataSize() == 0, "Setup: 버퍼가 비워지지 않음");
+        TEST_ASSERT(container->GetDataSize() == 0, "Setup: 버퍼가 비워지지 않음");
         
         // 이제 _readPos = _writePos = 1022 (경계 직전)
         
@@ -318,18 +318,18 @@ void Test_BoundaryConditions()
             PrintProgress("Wrap-Around", i, ITERATIONS);
 
             // 2. 1바이트 Enque (1022 → 1023 → 0으로 wrap)
-            size_t written = rb->Enqueue(&byte, 1);
+            size_t written = container->Enqueue(&byte, 1);
             TEST_ASSERT(written == 1, "경계 Enqueue 실패1");
-            written = rb->Enqueue(&byte, 1);
+            written = container->Enqueue(&byte, 1);
             TEST_ASSERT(written == 1, "경계 Enqueue 실패2");
 
 			// 3. 1바이트 Deque (0 -> 1023 -> 1022로 wrap)
             char readByte;
-            size_t read = rb->Dequeue(&readByte, 1);
+            size_t read = container->Dequeue(&readByte, 1);
             TEST_ASSERT(read == 1, "경계 Dequeue 실패1");
-            read = rb->Dequeue(&readByte, 1);
+            read = container->Dequeue(&readByte, 1);
             TEST_ASSERT(read == 1, "경계 Dequeue 실패2");
-            TEST_ASSERT(rb->GetDataSize() == 0, "경계 작업 후 Empty 실패");
+            TEST_ASSERT(container->GetDataSize() == 0, "경계 작업 후 Empty 실패");
         }
 
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
@@ -340,7 +340,7 @@ void Test_BoundaryConditions()
     // 시나리오 2: 다양한 크기로 Wrap Around 테스트
     {
         std::cout << "\n[시나리오 2] 다양한 크기 Wrap Around 테스트" << std::endl;
-        auto rb = std::make_unique<CRingBufferST>(256);  // 변경
+        auto container = std::make_unique<CRingBufferST>(256);  // 변경
         std::vector<char> data(200);
         auto startTime = std::chrono::steady_clock::now();
 
@@ -349,16 +349,16 @@ void Test_BoundaryConditions()
             g_totalIterations = i;
             PrintProgress("다양한 Wrap", i, ITERATIONS);
 
-            size_t written = rb->Enqueue(data.data(), 200);
+            size_t written = container->Enqueue(data.data(), 200);
             TEST_ASSERT(written == 200, "200바이트 쓰기 실패");
 
-            size_t read = rb->Dequeue(data.data(), 150);
+            size_t read = container->Dequeue(data.data(), 150);
             TEST_ASSERT(read == 150, "150바이트 읽기 실패");
 
-            written = rb->Enqueue(data.data(), 150);
+            written = container->Enqueue(data.data(), 150);
             TEST_ASSERT(written == 150, "순환 쓰기 실패");
 
-            read = rb->Dequeue(data.data(), 200);
+            read = container->Dequeue(data.data(), 200);
             TEST_ASSERT(read == 200, "순환 읽기 실패");
         }
 
@@ -370,7 +370,7 @@ void Test_BoundaryConditions()
     // 시나리오 3: 경계값 초과 시도
     {
         std::cout << "\n[시나리오 3] 경계값 초과 시도 테스트" << std::endl;
-        auto rb = std::make_unique<CRingBufferST>(512);  // 변경
+        auto container = std::make_unique<CRingBufferST>(512);  // 변경
         std::vector<char> overData(1024);
         auto startTime = std::chrono::steady_clock::now();
 
@@ -379,20 +379,20 @@ void Test_BoundaryConditions()
             g_totalIterations = i;
             PrintProgress("경계값 초과", i, ITERATIONS);
 
-            size_t written = rb->Enqueue(overData.data(), overData.size());
+            size_t written = container->Enqueue(overData.data(), overData.size());
             TEST_ASSERT(written <= 511, "capacity 초과 쓰기 허용됨");
 
-            rb->Clear();
+            container->Clear();
             char readBuf[10];
-            size_t read = rb->Dequeue(readBuf, 10);
+            size_t read = container->Dequeue(readBuf, 10);
             TEST_ASSERT(read == 0, "빈 버퍼에서 읽기 성공");
 
             std::vector<char> fillData(511);
-            rb->Enqueue(fillData.data(), fillData.size());
-            written = rb->Enqueue(&readBuf[0], 1);
+            container->Enqueue(fillData.data(), fillData.size());
+            written = container->Enqueue(&readBuf[0], 1);
             TEST_ASSERT(written == 0, "Full 버퍼에 쓰기 성공");
 
-            rb->Clear();
+            container->Clear();
         }
 
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
@@ -427,8 +427,8 @@ void RunProducerConsumerTest(
     std::atomic<int> producersCompleted(0);    
     std::atomic<int> consumersCompleted(0);
 
-    auto rb = std::make_unique<CRingBufferMT>(65536);
-    if (!rb->IsValid())
+    auto container = std::make_unique<CRingBufferMT>(65536);
+    if (!container->IsValid())
     {
         std::cout << "[ERROR] RingBuffer 할당 실패" << std::endl;
         return;
@@ -510,7 +510,7 @@ void RunProducerConsumerTest(
                 // All-or-Nothing: 전체 쓰기 성공할 때까지 재시도
                 while (written == 0) 
                 {
-                    written = rb->Enqueue(batch.data(), totalSize);
+                    written = container->Enqueue(batch.data(), totalSize);
 
                     // 일부러 경합 유발을 위해 짧은 대기 추가하지 않음
                 }
@@ -543,7 +543,7 @@ void RunProducerConsumerTest(
                 // 랜덤 크기로 Dequeue 시도 (8~256바이트)
                 int requestCount = sizeDis(gen);
                 size_t requestSize = requestCount * sizeof(int);
-                size_t read = rb->Dequeue(readBuffer.data(), requestSize);
+                size_t read = container->Dequeue(readBuffer.data(), requestSize);
 
                 // All-or-Nothing: 0 또는 requestSize만 가능
                 TEST_ASSERT(read == 0 || read == requestSize, "All-or-Nothing 위반: 부분 읽기 " + std::to_string(read) + " 발생");
@@ -620,7 +620,7 @@ void RunProducerConsumerTest(
     TEST_ASSERT(duplicateCount == 0, "중복 처리된 숫자 발견");
     std::cout << "  > 모든 숫자 정확히 1번씩 처리 완료" << std::endl;
 
-    TEST_ASSERT(rb->GetDataSize() == 0, "버퍼가 완전히 비워지지 않음");
+    TEST_ASSERT(container->GetDataSize() == 0, "버퍼가 완전히 비워지지 않음");
     std::cout << "  > 버퍼 완전히 비워짐" << std::endl;
 
     std::cout << "\n[PASS] Producer " << producerCount << " / Consumer " << consumerCount << " 완료 (소요: " << elapsed << "초)" << std::endl;
@@ -703,8 +703,8 @@ void RunPeekConsumeTest(
 
     std::atomic<bool> allProducersDone(false);
 
-    auto rb = std::make_unique<CRingBufferMT>(65536);
-    if (!rb->IsValid())
+    auto container = std::make_unique<CRingBufferMT>(65536);
+    if (!container->IsValid())
     {
         std::cout << "[ERROR] RingBuffer 할당 실패" << std::endl;
         return;
@@ -787,7 +787,7 @@ void RunPeekConsumeTest(
                 // All-or-Nothing: 전체 쓰기 성공할 때까지 재시도
                 while (written == 0)
                 {
-                    written = rb->Enqueue(batch.data(), totalSize);
+                    written = container->Enqueue(batch.data(), totalSize);
                 }
 
                 TEST_ASSERT(written == totalSize, "Enqueue 크기 불일치");
@@ -819,7 +819,7 @@ void RunPeekConsumeTest(
                 size_t requestSize = requestCount * sizeof(int);
                 
                 // 1. Peek으로 데이터 미리보기
-                size_t peeked = rb->Peek(peekBuffer.data(), requestSize);
+                size_t peeked = container->Peek(peekBuffer.data(), requestSize);
                 
                 // All-or-Nothing: 0 또는 requestSize만 가능
                 TEST_ASSERT(peeked == 0 || peeked == requestSize, 
@@ -841,7 +841,7 @@ void RunPeekConsumeTest(
                 }
 
                 // 3. 검증 완료 후 Consume
-                size_t consumed = rb->Consume(requestSize);
+                size_t consumed = container->Consume(requestSize);
                 TEST_ASSERT(consumed == requestSize, 
                     "Peek 후 Consume 실패! Peek=" + std::to_string(peeked) + ", Consume=" + std::to_string(consumed));
 
@@ -905,10 +905,8 @@ void RunPeekConsumeTest(
     TEST_ASSERT(duplicateCount == 0, "중복 처리된 숫자 발견");
     std::cout << "  > 모든 숫자 정확히 1번씩 처리 완료" << std::endl;
 
-    TEST_ASSERT(rb->GetDataSize() == 0, "버퍼가 완전히 비워지지 않음");
+    TEST_ASSERT(container->GetDataSize() == 0, "버퍼가 완전히 비워지지 않음");
     std::cout << "  > 버퍼 완전히 비워짐" << std::endl;
-
-    std::cout << "  > 총 Peek 시도: " << totalPeeked << " 회" << std::endl;
 
     std::cout << "\n[PASS] Producer " << producerCount << " / Consumer " << consumerCount 
               << " 완료 (소요: " << elapsed << "초)" << std::endl;
@@ -991,7 +989,7 @@ void RunHighContentionTest(
     const std::vector<std::string>& completedLines,
     const std::string& runningLine)
 {
-    auto rb = std::make_unique<CRingBufferMT>(1024);
+    auto container = std::make_unique<CRingBufferMT>(1024);
     std::atomic<uint64_t> enqueueCount(0);
     std::atomic<uint64_t> dequeueCount(0);
 
@@ -1009,7 +1007,7 @@ void RunHighContentionTest(
                 system("clear");
 #endif
                 std::cout << "========================================" << std::endl;
-                std::cout << "[Phase 2-3] 고빈도 경합 테스트" << std::endl;  // ← 추가
+                std::cout << "[Phase 2-2] 고빈도 경합 테스트" << std::endl;
                 std::cout << "========================================" << std::endl;
                 for (size_t j = 0; j < completedLines.size(); ++j)
                 {
@@ -1045,13 +1043,13 @@ void RunHighContentionTest(
                 // 짝수 스레드: Enqueue
                 if (i % 2 == 0)
                 {
-                    if (rb->Enqueue(&byte, 1) == 1)
+                    if (container->Enqueue(&byte, 1) == 1)
                         enqueueCount++;
                 }
                 // 홀수 스레드: Dequeue
                 else
                 {
-                    if (rb->Dequeue(&readByte, 1) == 1)
+                    if (container->Dequeue(&readByte, 1) == 1)
                         dequeueCount++;
                 }
             }
@@ -1098,7 +1096,7 @@ void RunHighContentionTest(
 void Test_HighContentionFalseSharing()
 {
     std::cout << "\n========================================" << std::endl;
-    std::cout << "[Phase 2-3] 고빈도 경합 테스트 (다양한 스레드 조합)" << std::endl;
+    std::cout << "[Phase 2-2] 고빈도 경합 테스트 (다양한 스레드 조합)" << std::endl;
     std::cout << "  - 각 스레드당 " << TestConfig::HIGH_CONTENTION_OPS_PER_THREAD / 1'000'000 << "백만 번 작업" << std::endl;
     std::cout << "========================================" << std::endl;
 
@@ -1122,7 +1120,7 @@ void Test_HighContentionFalseSharing()
 
         RunHighContentionTest(
             threadCount,
-            TestConfig::HIGH_CONTENTION_OPS_PER_THREAD,  // ← TestConfig 사용
+            TestConfig::HIGH_CONTENTION_OPS_PER_THREAD,
             completedLines,
             runningLine
         );
@@ -1143,7 +1141,7 @@ void Test_HighContentionFalseSharing()
         std::cout << completedLines[i] << std::endl;
     }
     std::cout << "\n========================================" << std::endl;
-    std::cout << "[Phase 2-3] 모든 고빈도 경합 테스트 완료!" << std::endl;
+    std::cout << "[Phase 2-2] 모든 고빈도 경합 테스트 완료!" << std::endl;
     std::cout << "  - 총 " << threadCounts.size() << "가지 스레드 조합 성공" << std::endl;
     std::cout << "========================================" << std::endl;
 }
@@ -1163,11 +1161,10 @@ void PrintMenu()
     std::cout << "  4. Phase 1 전체 실행" << std::endl;
     std::cout << "\n[Phase 2: 멀티스레드 검증]" << std::endl;
     std::cout << "  5. Producer-Consumer 테스트 (1억 바이트)" << std::endl;
-	std::cout << "  6. Peek + Consume 테스트 (1천만 번)" << std::endl;
-	std::cout << "  7. 고빈도 경합 테스트" << std::endl;
-    std::cout << "  8. Phase 2 전체 실행" << std::endl;
+    std::cout << "  6. 고빈도 경합 테스트" << std::endl;
+    std::cout << "  7. Phase 2 전체 실행" << std::endl;
     std::cout << "\n[전체]" << std::endl;
-    std::cout << "  9. 전체 테스트 실행 (Phase 1 + Phase 2)" << std::endl;
+    std::cout << "  8. 전체 테스트 실행 (Phase 1 + Phase 2)" << std::endl;
     std::cout << "  0. 종료" << std::endl;
     std::cout << "========================================" << std::endl;
     std::cout << "선택: ";
@@ -1222,21 +1219,20 @@ int main()
                 Test_ProducerConsumer();
                 break;
             case 6:
-                Test_PeekConsume();
+                Test_HighContentionFalseSharing();
                 break;
             case 7:
-                Test_HighContentionFalseSharing();
-				break;
-            case 8:
                 std::cout << "\n[Phase 2 전체 실행]" << std::endl;
                 Test_ProducerConsumer();
+                Test_HighContentionFalseSharing();
                 break;
-            case 9:
+            case 8:
                 std::cout << "\n[전체 테스트 실행]" << std::endl;
                 Test_DataIntegrity();
                 Test_Invariants();
                 Test_BoundaryConditions();
                 Test_ProducerConsumer();
+                Test_HighContentionFalseSharing();
                 break;
             default:
                 std::cout << "\n잘못된 선택입니다." << std::endl;
@@ -1274,28 +1270,28 @@ void Test_InvalidUsageDefense()
     std::cout << "[추가] 잘못된 사용 패턴 방어 테스트" << std::endl;
     std::cout << "========================================" << std::endl;
 
-    auto rb = std::make_unique<CRingBufferST>(1024);
+    auto container = std::make_unique<CRingBufferST>(1024);
 
     // 1. nullptr 전달
-    TEST_ASSERT(rb->Enqueue(nullptr, 100) == 0, "nullptr Enqueue 허용됨");
-    TEST_ASSERT(rb->Dequeue(nullptr, 100) == 0, "nullptr Dequeue 허용됨");
-    TEST_ASSERT(rb->Peek(nullptr, 100) == 0, "nullptr Peek 허용됨");
+    TEST_ASSERT(container->Enqueue(nullptr, 100) == 0, "nullptr Enqueue 허용됨");
+    TEST_ASSERT(container->Dequeue(nullptr, 100) == 0, "nullptr Dequeue 허용됨");
+    TEST_ASSERT(container->Peek(nullptr, 100) == 0, "nullptr Peek 허용됨");
     std::cout << "  > nullptr 방어: OK" << std::endl;
 
     // 2. size = 0 전달
     char dummy;
-    TEST_ASSERT(rb->Enqueue(&dummy, 0) == 0, "크기 0 Enqueue 허용됨");
-    TEST_ASSERT(rb->Dequeue(&dummy, 0) == 0, "크기 0 Dequeue 허용됨");
+    TEST_ASSERT(container->Enqueue(&dummy, 0) == 0, "크기 0 Enqueue 허용됨");
+    TEST_ASSERT(container->Dequeue(&dummy, 0) == 0, "크기 0 Dequeue 허용됨");
     std::cout << "  > 크기 0 방어: OK" << std::endl;
 
     // 3. 잘못된 capacity로 생성
-    auto invalidRb = std::make_unique<CRingBufferST>(0);
-    TEST_ASSERT(!invalidRb->IsValid(), "잘못된 capacity 허용됨");
+    auto invalidContainer = std::make_unique<CRingBufferST>(0);
+    TEST_ASSERT(!invalidContainer->IsValid(), "잘못된 capacity 허용됨");
     std::cout << "  > 잘못된 생성 방어: OK" << std::endl;
 
     // 4. 버퍼 오버플로우 시도
     std::vector<char> overData(2048);
-    size_t written = rb->Enqueue(overData.data(), overData.size());
+    size_t written = container->Enqueue(overData.data(), overData.size());
     TEST_ASSERT(written == 0, "capacity 초과 쓰기 허용됨");
     std::cout << "  > 오버플로우 방어: OK" << std::endl;
 
